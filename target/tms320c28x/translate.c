@@ -2870,6 +2870,18 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                             gen_addf32_rah_rbh_rch(ctx, a, b, c);
                             break;
                         }
+                        case 0b0010: //1110 0111 0010 ....
+                        {
+                            if (((insn & 0xf) == 0) && ((insn2 >> 9) == 0))//1110 0111 0010 0000 0000 000c ccbb baaa SUBF32 RaH,RbH,RcH
+                            {
+                                length = 4;
+                                uint32_t c = (insn2 >> 6) & 0b111;
+                                uint32_t b = (insn2 >> 3) & 0b111;
+                                uint32_t a = insn2 & 0b111;
+                                gen_subf32_rah_rbh_rch(ctx, a, b, c);
+                            }
+                            break;
+                        }
                     }
                     break;
                 }
