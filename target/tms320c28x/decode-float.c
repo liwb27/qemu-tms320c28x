@@ -446,6 +446,16 @@ static void gen_subf32_rah_rbh_rch(DisasContext *ctx, uint32_t a, uint32_t b, ui
     gen_sync_fpu_mem(a);
 }
 
+// SUBF32 RaH, #16FHi, RbH
+static void gen_subf32_rah_16fhi_rbh(DisasContext *ctx, uint32_t a, uint32_t hi, uint32_t b)
+{
+    TCGv tmp = cpu_tmp[0];
+    hi = hi << 16;
+    tcg_gen_movi_i32(tmp, hi);
+    gen_helper_fpu_subf(cpu_rh[a], cpu_env, tmp, cpu_rh[b]);
+    gen_sync_fpu_mem(a);
+}
+
 //UI16TOF32 RaH,mem16
 static void gen_ui16tof32_rah_mem16(DisasContext *ctx, uint32_t a, uint32_t mem16)
 {
