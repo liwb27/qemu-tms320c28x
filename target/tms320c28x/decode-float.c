@@ -439,6 +439,14 @@ static void gen_movxi_rah_16flohex(DisasContext *ctx, uint32_t a, uint32_t lo)
     gen_sync_fpu_mem(a);
 }
 
+static void gen_mpyf32_rah_rbh_rch_addf32_rdh_reh_rfh(DisasContext *ctx, uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e, uint32_t f)
+{
+    gen_helper_fpu_mpyf(cpu_rh[a], cpu_env, cpu_rh[b], cpu_rh[c]);
+    gen_sync_fpu_mem(a);
+    gen_helper_fpu_addf(cpu_rh[d], cpu_env, cpu_rh[e], cpu_rh[f]);
+    gen_sync_fpu_mem(d);
+}
+
 // SUBF32 RaH, RbH, RcH
 static void gen_subf32_rah_rbh_rch(DisasContext *ctx, uint32_t a, uint32_t b, uint32_t c)
 {

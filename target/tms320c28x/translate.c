@@ -2892,6 +2892,22 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                             gen_addf32_rah_rbh_rch(ctx, a, b, c);
                             break;
                         }
+                        case 0b0100: //1110 0111 0100 ....
+                        {
+                            if (((insn>>2) & 0b11) == 0)//1110 0111 0100 00ff feee dddc ccbb baaa MPYF32 RaH, RbH, RcH || ADDF32 RdH, ReH, RfH 
+                            {
+                                length = 4;
+                                uint32_t a = insn2 & 0b111;
+                                uint32_t b = (insn2 >> 3) & 0b111;
+                                uint32_t c = (insn2 >> 6) & 0b111;
+                                uint32_t d = (insn2 >> 9) & 0b111;
+                                uint32_t e = (insn2 >> 12) & 0b111;
+                                uint32_t f = ((insn & 0b11) << 1) | (insn2 >> 15);
+                                if (a != d)
+                                    gen_mpyf32_rah_rbh_rch_addf32_rdh_reh_rfh(ctx, a, b, c, d, e, f);
+                            }
+                            break;
+                        }
                         case 0b0010: //1110 0111 0010 ....
                         {
                             if (((insn & 0xf) == 0) && ((insn2 >> 9) == 0))//1110 0111 0010 0000 0000 000c ccbb baaa SUBF32 RaH,RbH,RcH

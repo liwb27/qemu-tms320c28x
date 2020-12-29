@@ -3597,6 +3597,21 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                             fprintf_func(stream, "0x%08x; ADDF32 R%dH,R%dH,R%dH", insn32, a, b, c);
                             break;
                         }
+                        case 0b0100: //1110 0111 0100 ....
+                        {
+                            if (((insn32>>18) & 0b11) == 0)//1110 0111 0100 00ff feee dddc ccbb baaa MPYF32 RaH, RbH, RcH || ADDF32 RdH, ReH, RfH 
+                            {
+                                length = 4;
+                                uint32_t a = insn32 & 0b111;
+                                uint32_t b = (insn32 >> 3) & 0b111;
+                                uint32_t c = (insn32 >> 6) & 0b111;
+                                uint32_t d = (insn32 >> 9) & 0b111;
+                                uint32_t e = (insn32 >> 12) & 0b111;
+                                uint32_t f = (insn32 >> 15) & 0b111;
+                                fprintf_func(stream, "0x%08x; MPYF32 R%dH,R%dH,R%dH || ADDF32 R%dH,R%dH,R%dH", insn32, a, b, c, d, e, f);
+                            }
+                            break;
+                        }
                         case 0b0010: //1110 0111 0010 ....
                         {
                             if (((insn32 >> 9) & 0b11111111111) == 0)//1110 0111 0010 0000 0000 000c ccbb baaa SUBF32 RaH,RbH,RcH
