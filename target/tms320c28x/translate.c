@@ -2883,6 +2883,15 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                 case 0b0111: //1110 0111 .... ....
                 {
                     switch((insn & 0x00f0) >> 4) {
+                        case 0b0000: //1110 0111 0000 0000 0000 000c ccbb baaa MPYF32 RaH, RbH, RcH
+                        {
+                            length = 4;
+                            uint32_t a = insn2 & 0b111;
+                            uint32_t b = (insn2 >> 3) & 0b111;
+                            uint32_t c = (insn2 >> 6) & 0b111;
+                            gen_mpyf32_rah_rbh_rch(ctx, a, b, c);
+                            break;
+                        }
                         case 0b0001: //1110 0111 0001 0000 0000 000c ccbb baaa ADDF32 RaH, RbH, RcH
                         {
                             length = 4;
@@ -2950,6 +2959,18 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                                 uint32_t a = insn2 & 0b111;
                                 gen_cmpf32_rah_16fhi(ctx, a, imm);
                             }
+                            break;
+                        }
+                        case 0b0100:
+                        case 0b0101:
+                        case 0b0110:
+                        case 0b0111: //1110 1000 10II IIII IIII IIII IIbb baaa MPYF32 RaH, #16FHi, RbH
+                        {
+                            length = 4;
+                            uint32_t hi = ((insn << 10) | (insn2 >> 6)) & 0xffff;
+                            uint32_t a = insn2 & 0b111;
+                            uint32_t b = (insn2 >> 3) & 0b111;
+                            gen_mpyf32_rah_16fhi_rbh(ctx, a, hi, b);
                             break;
                         }
                         case 0b1000:

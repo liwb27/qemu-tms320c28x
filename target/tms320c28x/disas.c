@@ -3588,6 +3588,15 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                 case 0b0111: //1110 0111 .... ....
                 {
                     switch((insn & 0x00f0) >> 4) {
+                        case 0b0000: //1110 0111 0000 0000 0000 000c ccbb baaa MPYF32 RaH, RbH, RcH
+                        {
+                            length = 4;
+                            uint32_t a = insn32 & 0b111;
+                            uint32_t b = (insn32 >> 3) & 0b111;
+                            uint32_t c = (insn32 >> 6) & 0b111;
+                            fprintf_func(stream, "0x%08x; MPYF32 R%dH,R%dH,R%dH", insn32, a, b, c);
+                            break;
+                        }
                         case 0b0001: //1110 0111 0001 0000 0000 000c ccbb baaa ADDF32 RaH, RbH, RcH
                         {
                             length = 4;
@@ -3654,6 +3663,18 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                                 uint32_t a = insn32 & 0b111;
                                 fprintf_func(stream, "0x%08x; CMPF32 R%dH,#0x%4x", insn32, a, imm);
                             }
+                            break;
+                        }
+                        case 0b0100:
+                        case 0b0101:
+                        case 0b0110:
+                        case 0b0111: //1110 1000 10II IIII IIII IIII IIbb baaa MPYF32 RaH, #16FHi, RbH
+                        {
+                            length = 4;
+                            uint32_t hi = (insn32>>6) & 0xffff;
+                            uint32_t a = insn32 & 0b111;
+                            uint32_t b = (insn32 >> 3) & 0b111;
+                            fprintf_func(stream, "0x%08x; MPYF32 R%dH,#0x%4x,R%dH", insn32, a, hi, b);
                             break;
                         }
                         case 0b1000:
