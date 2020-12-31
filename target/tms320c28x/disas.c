@@ -2937,6 +2937,25 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                     fprintf_func(stream, "0x%08x; IN %s,*(0x%x)", insn32, str, pa);
                     break;
                 }
+                case 0b0101: //1011 0101 .... ....
+                {
+                    if (((insn >>7) & 1) == 0)
+                    {//1011 0101 0bbb bbbb 0000 0000 loc16 RPTB label,loc16
+                        length = 4;
+                        uint32_t size = insn & 0x7f;
+                        uint32_t mode = insn32 & 0xff;
+                        get_loc_string(str,mode,LOC16);
+                        fprintf_func(stream, "0x%08x; RPTB #%d,@%s", insn32, size, str);
+                    }
+                    else
+                    {//1011 0101 1bbb bbbb cccc cccc cccc cccc RPTB label,#RC
+                        length = 4;
+                        uint32_t size = insn & 0x7f;
+                        uint32_t repeat_count = insn32 & 0xffff;
+                        fprintf_func(stream, "0x%08x; RPTB #%d,#0x%x", insn32, size, repeat_count);
+                    }
+                    break;
+                }
                 case 0b0110: //1011 0110 CCCC CCCC MOVB XAR7,#8bit
                 {
                     uint32_t imm = insn & 0xff;

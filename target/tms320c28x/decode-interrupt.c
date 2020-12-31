@@ -63,7 +63,13 @@ static void gen_iret(DisasContext *ctx)
     gen_st_reg_high_half(cpu_xt, tmp);
     //SP = SP - 1
     tcg_gen_subi_i32(cpu_sp, cpu_sp, 1);
-    //
+
+    // when interrupt is exits, restore RAS to RA bit
+    gen_get_bit(tmp, cpu_rb, RAS_BIT, RAS_MASK);
+    gen_set_bit(cpu_rb, RA_BIT, RAS_MASK, tmp);
+    //SAVE RNDF32=1 (in TMS320C28x FPU Primer (Rev. A))
+    gen_seti_bit(cpu_stf, RND32_BIT, RND32_MASK, 1);
+
     tcg_temp_free(tmp);
     tcg_temp_free(tmp2);
     ctx->base.is_jmp = DISAS_JUMP;

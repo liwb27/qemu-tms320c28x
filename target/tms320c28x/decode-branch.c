@@ -771,3 +771,59 @@ static void gen_xretc_cond(DisasContext *ctx, uint32_t cond)
 
     tcg_temp_free(cond_tcg);
 }
+
+
+static void gen_rptb_rc(DisasContext *ctx, uint32_t rsize, uint32_t repeat_count)
+{
+    //set repeat count
+    gen_seti_bit(cpu_rb, RC_BIT, RC_MASK, repeat_count);
+    //set RSIZE
+    gen_seti_bit(cpu_rb, RSIZE_BIT, RSIZE_MASK, rsize);
+    //set RE,re=lower 7bits of (PC + 1 + RSIZE)
+    uint32_t re = (rsize + (ctx->base.pc_next >> 1) + 1) & 0x7f;
+    gen_seti_bit(cpu_rb, RE_BIT, RE_MASK, re);
+    //set RA
+    gen_seti_bit(cpu_rb, RA_BIT, RA_MASK, 1);
+    //prepare repeat block
+    ctx->rb_set = true;
+    ctx->rb_pc = rsize + (ctx->base.pc_next >> 1) + 2;
+    ctx->rb_start = gen_new_label();
+    gen_set_label(ctx->rb_start);
+}
+
+static void gen_rptb_loc16(DisasContext *ctx, uint32_t rsize, uint32_t mode)
+{
+    //set repeat count
+    TCGv tmp = cpu_tmp[0];
+    gen_ld_loc16(tmp, mode);
+    gen_set_bit(cpu_rb, RC_BIT, RC_MASK, tmp);
+    //set RSIZE
+    gen_seti_bit(cpu_rb, RSIZE_BIT, RSIZE_MASK, rsize);
+    //set RE,re=lower 7bits of (PC + 1 + RSIZE)
+    uint32_t re = (rsize + (ctx->base.pc_next >> 1) + 1) & 0x7f;
+    gen_seti_bit(cpu_rb, RE_BIT, RE_MASK, re);
+    //set RA
+    gen_seti_bit(cpu_rb, RA_BIT, RA_MASK, 1);
+    //prepare repeat block
+    ctx->rb_set = true;
+    ctx->rb_pc = rsize + (ctx->base.pc_next >> 1) + 2;
+    ctx->rb_start = gen_new_label();
+    gen_set_label(ctx->rb_start);
+}
+
+static void gen_repeat_block(DisasContext *ctx)
+{
+    gen_reset_rptc(ctx);
+    ctx->base.is_jmp = DISAS_JUMP;
+
+    TCGv tmp = cpu_tmp[0];
+    gen_get_bit(tmp, cpu_rb, RC_BIT, RC_MASK);
+
+    TCGLabel *label = gen_new_label();
+    tcg_gen_brcondi_i32(TCG_COND_EQ, tmp, 0, label);//下一条指令，结束rb
+    tcg_gen_subi_i32(tmp, tmp, 1);
+    gen_set_bit(cpu_rb, RC_BIT, RC_MASK, tmp);
+    tcg_gen_br(ctx->rb_start);//跳转至rb开始位置
+    gen_set_label(label);
+    gen_seti_bit(cpu_rb, RA_BIT, RA_MASK, 0);//set RA = 0
+}

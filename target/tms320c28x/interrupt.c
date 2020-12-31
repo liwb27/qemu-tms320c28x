@@ -45,6 +45,10 @@ void tms320c28x_cpu_do_interrupt(CPUState *cs)
             env->ier = env->ier & (~mask);
         }
 
+        // when interrupt is taken, save RA to RAS bit
+        int ra = cpu_get_rb(env, RA_BIT, RA_MASK);
+        cpu_set_rb(env, ra, RAS_BIT, RAS_MASK);
+        
         // temp = pc + 1 or + 2
         int temp = env->pc + env->insn_length; 
         // sp = sp + 1, for odd address

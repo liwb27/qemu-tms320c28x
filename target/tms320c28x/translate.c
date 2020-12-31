@@ -42,6 +42,9 @@ typedef struct DisasContext {
     DisasContextBase base;
 
     bool rpt_set;
+    bool rb_set;
+    uint32_t rb_pc;
+    TCGLabel *rb_start;
     // int rpt_counter;
     // TCGv temp[8];
 } DisasContext;
@@ -144,6 +147,16 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
     // uint32_t insn32 = insn;
     bool set_repeat_counter = false;
     // qemu_log_mask(CPU_LOG_TB_IN_ASM ,"insn is: 0x%x \n",insn);
+
+    if (ctx->rb_set)
+    {//check for rb_pc
+        if ((ctx->base.pc_next >> 1) == ctx->rb_pc)
+        {
+            ctx->rb_set = false;
+            gen_repeat_block(ctx);
+            // return 0;
+        }
+    }
 
     switch ((insn & 0xf000) >> 12) {
         case 0b0000:
@@ -2315,6 +2328,24 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                     gen_in_loc16_pa(ctx, mode, pa);
                     break;
                 }
+                case 0b0101: //1011 0101 .... ....
+                {
+                    if (((insn >>7) & 1) == 0)
+                    {//1011 0101 0bbb bbbb 0000 0000 loc16 RPTB label,loc16
+                        length = 4;
+                        uint32_t size = insn & 0x7f;
+                        uint32_t mode = insn2 & 0xff;
+                        gen_rptb_loc16(ctx, size, mode);
+                    }
+                    else
+                    {//1011 0101 1bbb bbbb cccc cccc cccc cccc RPTB label,#RC
+                        length = 4;
+                        uint32_t size = insn & 0x7f;
+                        uint32_t repeat_count = insn2;
+                        gen_rptb_rc(ctx, size, repeat_count);
+                    }
+                    break;
+                }
                 case 0b0110: //1011 0110 CCCC CCCC MOVB XAR7,#8bit
                 {
                     uint32_t imm = insn & 0xff;
@@ -3348,6 +3379,7 @@ static void tms320c28x_tr_init_disas_context(DisasContextBase *dcb, CPUState *cs
     //     dc->temp[i] = tcg_const_local_i32(0);
     // }
     dc->rpt_set = false;
+    dc->rb_set = false;
     // dc->rpt_counter = 0;
 }
 
