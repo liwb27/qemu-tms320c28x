@@ -169,11 +169,10 @@ static void gen_i32tof32_rah_rbh(DisasContext *ctx, uint32_t a, uint32_t b)
     gen_sync_fpu_mem(a);
 }
 
-//UI32TOF32 RaH,RbH
-static void gen_ui32tof32_rah_rbh(DisasContext *ctx, uint32_t a, uint32_t b)
+// MAXF32 RaH,RbH
+static void gen_maxf32_rah_rbh(DisasContext *ctx, uint32_t a, uint32_t b)
 {
-    gen_helper_fpu_ui32tof32(cpu_rh[a], cpu_env, cpu_rh[b]);
-    gen_sync_fpu_mem(a);
+    gen_helper_fpu_maxf(cpu_rh[a], cpu_env, cpu_rh[a], cpu_rh[b]);
 }
 
 // MOV16 mem16, RaH
@@ -532,5 +531,12 @@ static void gen_ui32tof32_rah_mem32(DisasContext *ctx, uint32_t a, uint32_t mem3
     TCGv tmp = cpu_tmp[0];
     gen_ld_loc32(tmp, mem32);
     gen_helper_fpu_ui32tof32(cpu_rh[a], cpu_env, tmp);
+    gen_sync_fpu_mem(a);
+}
+
+//UI32TOF32 RaH,RbH
+static void gen_ui32tof32_rah_rbh(DisasContext *ctx, uint32_t a, uint32_t b)
+{
+    gen_helper_fpu_ui32tof32(cpu_rh[a], cpu_env, cpu_rh[b]);
     gen_sync_fpu_mem(a);
 }

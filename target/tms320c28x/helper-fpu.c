@@ -4,6 +4,19 @@
 #include "exception.h"
 #include "fpu/softfloat.h"
 
+static void set_round_mode(CPUTms320c28xState *env)
+{
+    //set round mode
+    if (cpu_get_stf(env, RND32_BIT, RND32_MASK) == 0) //truncate
+    {
+        env->fp_status.float_rounding_mode = float_round_to_zero;
+    }
+    else
+    {
+        env->fp_status.float_rounding_mode = float_round_nearest_even;
+    }
+}
+
 uint32_t HELPER(fpu_absf)(CPUTms320c28xState *env, uint32_t value)
 {
     float32 ret = float32_abs(make_float32(value));
@@ -25,14 +38,8 @@ uint32_t HELPER(fpu_absf)(CPUTms320c28xState *env, uint32_t value)
 uint32_t HELPER(fpu_addf)(CPUTms320c28xState *env, uint32_t a, uint32_t b)
 {
     //set round mode
-    if (cpu_get_stf(env, RND32_BIT, RND32_MASK) == 0) //truncate
-    {
-        env->fp_status.float_rounding_mode = float_round_to_zero;
-    }
-    else
-    {
-        env->fp_status.float_rounding_mode = float_round_nearest_even;
-    }
+    set_round_mode(env);
+
     float32 ret = float32_add(a, b, &env->fp_status);
     //LVF
     if (env->fp_status.float_exception_flags & float_flag_overflow)
@@ -617,14 +624,8 @@ uint32_t HELPER(fpu_fracf32)(CPUTms320c28xState *env, uint32_t value)
 uint32_t HELPER(fpu_subf)(CPUTms320c28xState *env, uint32_t a, uint32_t b)
 {
     //set round mode
-    if (cpu_get_stf(env, RND32_BIT, RND32_MASK) == 0) //truncate
-    {
-        env->fp_status.float_rounding_mode = float_round_to_zero;
-    }
-    else
-    {
-        env->fp_status.float_rounding_mode = float_round_nearest_even;
-    }
+    set_round_mode(env);
+
     float32 ret = float32_sub(a, b, &env->fp_status);
     //LVF
     if (env->fp_status.float_exception_flags & float_flag_overflow)
@@ -642,14 +643,8 @@ uint32_t HELPER(fpu_subf)(CPUTms320c28xState *env, uint32_t a, uint32_t b)
 uint32_t HELPER(fpu_mpyf)(CPUTms320c28xState *env, uint32_t a, uint32_t b)
 {
     //set round mode
-    if (cpu_get_stf(env, RND32_BIT, RND32_MASK) == 0) //truncate
-    {
-        env->fp_status.float_rounding_mode = float_round_to_zero;
-    }
-    else
-    {
-        env->fp_status.float_rounding_mode = float_round_nearest_even;
-    }
+    set_round_mode(env);
+
     float32 ret = float32_mul(a, b, &env->fp_status);
     //LVF
     if (env->fp_status.float_exception_flags & float_flag_overflow)
@@ -664,6 +659,22 @@ uint32_t HELPER(fpu_mpyf)(CPUTms320c28xState *env, uint32_t a, uint32_t b)
     return ret;
 }
 
+uint32_t HELPER(fpu_maxf)(CPUTms320c28xState *env, uint32_t a, uint32_t b)
+{
+    //Negative zero will be treated as positive zero. ---------checked
+    //A denormalized value will be treated as positive zero.
+    env->fp_status.flush_inputs_to_zero = 1;
+    //Not-a-Number (NaN) will be treated as infinity.
+    if (a == 0x7FBFFFFF)
+        a = 0x7F800000;
+    if (b == 0x7FBFFFFF)
+        b = 0x7F800000;
+
+    set_round_mode(env);
+    uint32_t ret = float32_max(a, b, &env->fp_status);
+    helper_fpu_cmpf(env, a, b);//set ZF,NF bit
+    return ret;
+}
 
 uint32_t HELPER(fpu_f32toi16)(CPUTms320c28xState *env, uint32_t value)
 {
