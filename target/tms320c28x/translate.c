@@ -2689,6 +2689,17 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                             gen_subf32_rdh_reh_rfh_mov32_rah_mem32(ctx, d, e, f, a, mem32);
                             break;
                         }
+                        case 0b0011: //1110 0011 0011 fffe eedd daaa mem32 MACF32 R3H,R2H,RdH,ReH,RfH||MOV32 RaH,mem32
+                        {
+                            length = 4;
+                            uint32_t mem32 = insn2 & 0xff;
+                            uint32_t a = (insn2 >> 8) & 0b111;
+                            uint32_t d = (insn2 >> 11) & 0b111;
+                            uint32_t e = ((insn2 >> 14) | (insn << 2)) & 0b111;
+                            uint32_t f = (insn >> 1) & 0b111;
+                            gen_macf32_r3h_r2h_rdh_reh_rfh_mov32_rah_mem32(ctx, d, e, f, mem32, a);
+                            break;
+                        }
                     }
                     break;
                 }

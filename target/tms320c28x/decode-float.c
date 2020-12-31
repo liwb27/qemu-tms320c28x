@@ -169,6 +169,24 @@ static void gen_i32tof32_rah_rbh(DisasContext *ctx, uint32_t a, uint32_t b)
     gen_sync_fpu_mem(a);
 }
 
+// MACF32 R3H,R2H,RdH,ReH,RfH || MOV32 RaH,mem32
+static void gen_macf32_r3h_r2h_rdh_reh_rfh_mov32_rah_mem32(DisasContext *ctx, uint32_t d, uint32_t e, uint32_t f, uint32_t mem32, uint32_t a)
+{
+    if(is_reg_addressing_mode(mem32, LOC32))
+    {
+        return;
+    }
+    //save to rah
+    gen_ld_loc32(cpu_rh[a], mem32);
+    gen_test_nf_ni_zf_zi(cpu_rh[a]);
+    gen_sync_fpu_mem(a);
+    //macf
+    gen_helper_fpu_addf(cpu_rh[3], cpu_env, cpu_rh[3], cpu_rh[2]);
+    gen_sync_fpu_mem(3);
+    gen_helper_fpu_mpyf(cpu_rh[d], cpu_env, cpu_rh[e], cpu_rh[f]);
+    gen_sync_fpu_mem(d);
+}
+
 // MAXF32 RaH,RbH
 static void gen_maxf32_rah_rbh(DisasContext *ctx, uint32_t a, uint32_t b)
 {
