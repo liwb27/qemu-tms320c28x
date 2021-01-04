@@ -2714,6 +2714,17 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                             gen_macf32_r3h_r2h_rdh_reh_rfh_mov32_rah_mem32(ctx, d, e, f, mem32, a);
                             break;
                         }
+                        case 0b1100: //1110 0011 1100 fffe eedd daaa mem32 MACF32 R7H,R6H,RdH,ReH,RfH||MOV32 RaH,mem32
+                        {
+                            length = 4;
+                            uint32_t mem32 = insn2 & 0xff;
+                            uint32_t a = (insn2 >> 8) & 0b111;
+                            uint32_t d = (insn2 >> 11) & 0b111;
+                            uint32_t e = ((insn2 >> 14) | (insn << 2)) & 0b111;
+                            uint32_t f = (insn >> 1) & 0b111;
+                            gen_macf32_r7h_r6h_rdh_reh_rfh_mov32_rah_mem32(ctx, d, e, f, mem32, a);
+                            break;
+                        }
                     }
                     break;
                 }
@@ -3025,6 +3036,17 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                                 uint32_t imm = (insn << 13 | insn2 >> 3) & 0xffff;
                                 uint32_t a = insn2 & 0b111;
                                 gen_cmpf32_rah_16fhi(ctx, a, imm);
+                            }
+                            break;
+                        }
+                        case 0b0010: //1110 1000 0010 0III IIII IIII IIII Iaaa MAXF32 RaH,#16FHi
+                        {
+                            if (((insn>>3) & 1) == 0)
+                            {
+                                length = 4;
+                                uint32_t imm = (insn << 13 | insn2 >> 3) & 0xffff;
+                                uint32_t a = insn2 & 0b111;
+                                gen_maxf32_rah_16fhi(ctx, a, imm);
                             }
                             break;
                         }

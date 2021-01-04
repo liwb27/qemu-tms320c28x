@@ -245,10 +245,39 @@ static void gen_macf32_r7h_r3h_mem32_xar7(DisasContext *ctx, uint32_t mem32)
     }
 }
 
+// MACF32 R7H,R6H,RdH,ReH,RfH || MOV32 RaH,mem32
+static void gen_macf32_r7h_r6h_rdh_reh_rfh_mov32_rah_mem32(DisasContext *ctx, uint32_t d, uint32_t e, uint32_t f, uint32_t mem32, uint32_t a)
+{
+    if(is_reg_addressing_mode(mem32, LOC32))
+    {
+        return;
+    }
+    //save to rah
+    gen_ld_loc32(cpu_rh[a], mem32);
+    gen_test_nf_ni_zf_zi(cpu_rh[a]);
+    gen_sync_fpu_mem(a);
+    //macf
+    gen_helper_fpu_addf(cpu_rh[7], cpu_env, cpu_rh[7], cpu_rh[6]);
+    gen_sync_fpu_mem(3);
+    gen_helper_fpu_mpyf(cpu_rh[d], cpu_env, cpu_rh[e], cpu_rh[f]);
+    gen_sync_fpu_mem(d);
+}
+
 // MAXF32 RaH,RbH
 static void gen_maxf32_rah_rbh(DisasContext *ctx, uint32_t a, uint32_t b)
 {
     gen_helper_fpu_maxf(cpu_rh[a], cpu_env, cpu_rh[a], cpu_rh[b]);
+}
+
+// MAXF32 RaH,#16FHi
+static void gen_maxf32_rah_16fhi(DisasContext *ctx, uint32_t a, uint32_t hi)
+{
+    TCGv tmp = cpu_tmp[0];
+    //RaH[31:16] = #16FHiHex
+    //RaH[15:0] = 0
+    hi = hi << 16;
+    tcg_gen_movi_i32(tmp, hi);
+    gen_helper_fpu_maxf(cpu_rh[a], cpu_env, cpu_rh[a], tmp);
 }
 
 // MOV16 mem16, RaH
