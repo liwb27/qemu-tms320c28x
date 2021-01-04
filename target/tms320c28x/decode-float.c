@@ -187,6 +187,64 @@ static void gen_macf32_r3h_r2h_rdh_reh_rfh_mov32_rah_mem32(DisasContext *ctx, ui
     gen_sync_fpu_mem(d);
 }
 
+// MACF32 R7H,R3H,mem32,*XAR7++
+static void gen_macf32_r7h_r3h_mem32_xar7(DisasContext *ctx, uint32_t mem32)
+{
+    TCGv tmp = cpu_tmp[0];
+    TCGv tmp2 = cpu_tmp[2];
+    if(is_reg_addressing_mode(mem32, LOC32))
+    {
+        return;
+    }
+    if (ctx->rpt_set)
+    {
+        TCGv counter = cpu_tmp[3];
+        tcg_gen_movi_i32(counter, 0);
+
+        TCGLabel *begin = gen_new_label();
+        TCGLabel *end = gen_new_label();
+        TCGLabel *cycle2 = gen_new_label();
+        TCGLabel *repeat_check = gen_new_label();
+        gen_set_label(begin);
+        //load mem32
+        gen_ld_loc32(tmp, mem32);
+        //load *XAR7++
+        gen_ld_loc32(tmp2, 0x87);
+
+        tcg_gen_brcondi_i32(TCG_COND_EQ, counter, 1, cycle2);
+        //R3H=R3H+R2H
+        gen_helper_fpu_addf(cpu_rh[3], cpu_env, cpu_rh[3], cpu_rh[2]);
+        //R2H=[mem32]*[xar7++]
+        gen_helper_fpu_mpyf(cpu_rh[2], cpu_env, tmp, tmp2);
+        tcg_gen_br(repeat_check);
+
+        gen_set_label(cycle2);
+        //R7H=R7H+R6H
+        gen_helper_fpu_addf(cpu_rh[7], cpu_env, cpu_rh[7], cpu_rh[6]);
+        //R6H=[mem32]*[xar7++]
+        gen_helper_fpu_mpyf(cpu_rh[6], cpu_env, tmp, tmp2);
+
+        gen_set_label(repeat_check);
+        tcg_gen_xori_i32(counter, counter, 1);//0,1 交替
+        tcg_gen_brcondi_i32(TCG_COND_EQ, cpu_rptc, 0, end);
+        tcg_gen_subi_i32(cpu_rptc, cpu_rptc, 1);
+        tcg_gen_br(begin);
+        gen_set_label(end);
+
+    }
+    else
+    {
+        //load mem32
+        gen_ld_loc32(tmp, mem32);
+        //load *XAR7++
+        gen_ld_loc32(tmp2, 0x87);
+        //R3H=R3H+R2H
+        gen_helper_fpu_addf(cpu_rh[3], cpu_env, cpu_rh[3], cpu_rh[2]);
+        //R2H=[mem32]*[xar7++]
+        gen_helper_fpu_mpyf(cpu_rh[2], cpu_env, tmp, tmp2);
+    }
+}
+
 // MAXF32 RaH,RbH
 static void gen_maxf32_rah_rbh(DisasContext *ctx, uint32_t a, uint32_t b)
 {

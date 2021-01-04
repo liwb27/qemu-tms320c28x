@@ -2593,6 +2593,20 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                             }
                             break;
                         }
+                        case 0b0101: //1110 0010 0101 ....
+                        {
+                            switch (insn & 0xf)
+                            {
+                                case 0b0000: //1110 0010 0101 0000 0001 1111 mem32 MACF32 R7H,R3H,mem32,*XAR7++
+                                {
+                                    length = 4;
+                                    uint32_t mem32 = insn2 & 0xff;
+                                    gen_macf32_r7h_r3h_mem32_xar7(ctx, mem32);
+                                    break;
+                                }
+                            }
+                            break;
+                        }
                         case 0b1000: //1110 0010 1000 ....
                         {
                             switch (insn & 0xf) {
