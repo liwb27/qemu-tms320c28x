@@ -280,6 +280,17 @@ static void gen_maxf32_rah_16fhi(DisasContext *ctx, uint32_t a, uint32_t hi)
     gen_helper_fpu_maxf(cpu_rh[a], cpu_env, cpu_rh[a], tmp);
 }
 
+// MAXF32 RaH,RbH || MOV32 RcH,RdH
+static void gen_maxf32_rah_rbh_mov32_rch_rdh(DisasContext *ctx, uint32_t a, uint32_t b, uint32_t c, uint32_t d)
+{
+    TCGLabel *end = gen_new_label();
+    tcg_gen_brcond_i32(TCG_COND_GE, cpu_rh[a], cpu_rh[b], end);
+    tcg_gen_mov_i32(cpu_rh[c], cpu_rh[d]);
+    //max(a,b) , set ZF,NF
+    gen_set_label(end);
+    gen_helper_fpu_maxf(cpu_rh[a], cpu_env, cpu_rh[a], cpu_rh[b]);
+}
+
 // MOV16 mem16, RaH
 static void gen_mov16_mem16_rah(DisasContext *ctx, uint32_t mem16, uint32_t a)
 {

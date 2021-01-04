@@ -3609,6 +3609,19 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                                     }
                                     break;
                                 }
+                                case 0b011100: //1110 0110 1001 1100 0000 dddc ccbb baaa MAXF32 RaH,RbH || MOV32 RcH,RdH
+                                {
+                                    if (((insn32 & 0xffff) >> 12) == 0)
+                                    {
+                                        length = 4;
+                                        uint32_t d = (insn32 >> 9) & 0b111;
+                                        uint32_t c = (insn32 >> 6) & 0b111;
+                                        uint32_t b = (insn32 >> 3) & 0b111;
+                                        uint32_t a = insn32 & 0b111;
+                                        fprintf_func(stream, "0x%08x; MAXF32 R%dH,R%dH || R%dH,R%dH", insn32, a, b, c, d);
+                                    }
+                                    break;
+                                }
                             }
                             break;
                         }

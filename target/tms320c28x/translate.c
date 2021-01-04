@@ -2914,6 +2914,19 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                                     }
                                     break;
                                 }
+                                case 0b011100: //1110 0110 1001 1100 0000 dddc ccbb baaa MAXF32 RaH,RbH || MOV32 RcH,RdH
+                                {
+                                    if ((insn2 >> 12) == 0)
+                                    {
+                                        length = 4;
+                                        uint32_t d = (insn2 >> 9) & 0b111;
+                                        uint32_t c = (insn2 >> 6) & 0b111;
+                                        uint32_t b = (insn2 >> 3) & 0b111;
+                                        uint32_t a = insn2 & 0b111;
+                                        gen_maxf32_rah_rbh_mov32_rch_rdh(ctx, a, b, c, d);
+                                    }
+                                    break;
+                                }
                             }
                             break;
                         }
