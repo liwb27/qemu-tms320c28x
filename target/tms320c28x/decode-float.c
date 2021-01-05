@@ -291,6 +291,34 @@ static void gen_maxf32_rah_rbh_mov32_rch_rdh(DisasContext *ctx, uint32_t a, uint
     gen_helper_fpu_maxf(cpu_rh[a], cpu_env, cpu_rh[a], cpu_rh[b]);
 }
 
+// MINF32 RaH,RbH
+static void gen_minf32_rah_rbh(DisasContext *ctx, uint32_t a, uint32_t b)
+{
+    gen_helper_fpu_minf(cpu_rh[a], cpu_env, cpu_rh[a], cpu_rh[b]);
+}
+
+// MINF32 RaH,#16FHi
+static void gen_minf32_rah_16fhi(DisasContext *ctx, uint32_t a, uint32_t hi)
+{
+    TCGv tmp = cpu_tmp[0];
+    //RaH[31:16] = #16FHiHex
+    //RaH[15:0] = 0
+    hi = hi << 16;
+    tcg_gen_movi_i32(tmp, hi);
+    gen_helper_fpu_minf(cpu_rh[a], cpu_env, cpu_rh[a], tmp);
+}
+
+// MINF32 RaH,RbH || MOV32 RcH,RdH
+static void gen_minf32_rah_rbh_mov32_rch_rdh(DisasContext *ctx, uint32_t a, uint32_t b, uint32_t c, uint32_t d)
+{
+    TCGLabel *end = gen_new_label();
+    tcg_gen_brcond_i32(TCG_COND_LE, cpu_rh[a], cpu_rh[b], end);
+    tcg_gen_mov_i32(cpu_rh[c], cpu_rh[d]);
+    //min(a,b) , set ZF,NF
+    gen_set_label(end);
+    gen_helper_fpu_minf(cpu_rh[a], cpu_env, cpu_rh[a], cpu_rh[b]);
+}
+
 // MOV16 mem16, RaH
 static void gen_mov16_mem16_rah(DisasContext *ctx, uint32_t mem16, uint32_t a)
 {

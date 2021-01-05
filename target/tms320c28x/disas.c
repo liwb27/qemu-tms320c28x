@@ -3576,6 +3576,17 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                                     }
                                     break;
                                 }
+                                case 0b010100: //1110 0110 1001 0100 0000 0000 00bb baaa CMPF32 RaH, RbH
+                                {
+                                    if (((insn32 & 0xffff) >> 6) == 0)
+                                    {
+                                        uint32_t b = (insn32 >> 3) & 0b111;
+                                        uint32_t a = insn32 & 0b111;
+                                        length = 4;
+                                        fprintf_func(stream, "0x%08x; CMPF32 R%dH,R%dH", insn32, a, b);
+                                    }
+                                    break;
+                                }
                                 case 0b010101: //1110 0110 1001 0101 0000 0000 00bb baaa ABSF32 RaH,RbH
                                 {
                                     if (((insn32 & 0xffff) >> 6) == 0)
@@ -3598,14 +3609,14 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                                     }
                                     break;
                                 }
-                                case 0b010100: //1110 0110 1001 0100 0000 0000 00bb baaa CMPF32 RaH, RbH
+                                case 0b010111: //1110 0110 1001 0111 0000 0000 00bb baaa MINF32 RaH,RbH
                                 {
                                     if (((insn32 & 0xffff) >> 6) == 0)
                                     {
                                         uint32_t b = (insn32 >> 3) & 0b111;
                                         uint32_t a = insn32 & 0b111;
                                         length = 4;
-                                        fprintf_func(stream, "0x%08x; CMPF32 R%dH,R%dH", insn32, a, b);
+                                        fprintf_func(stream, "0x%08x; MINF32 R%dH,R%dH", insn32, a, b);
                                     }
                                     break;
                                 }
@@ -3619,6 +3630,19 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                                         uint32_t b = (insn32 >> 3) & 0b111;
                                         uint32_t a = insn32 & 0b111;
                                         fprintf_func(stream, "0x%08x; MAXF32 R%dH,R%dH || R%dH,R%dH", insn32, a, b, c, d);
+                                    }
+                                    break;
+                                }
+                                case 0b011101: //1110 0110 1001 1101 0000 dddc ccbb baaa MINF32 RaH,RbH || MOV32 RcH,RdH
+                                {
+                                    if (((insn32 & 0xffff) >> 12) == 0)
+                                    {
+                                        length = 4;
+                                        uint32_t d = (insn32 >> 9) & 0b111;
+                                        uint32_t c = (insn32 >> 6) & 0b111;
+                                        uint32_t b = (insn32 >> 3) & 0b111;
+                                        uint32_t a = insn32 & 0b111;
+                                        fprintf_func(stream, "0x%08x; MINF32 R%dH,R%dH || R%dH,R%dH", insn32, a, b, c, d);
                                     }
                                     break;
                                 }
@@ -3744,6 +3768,28 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                                 uint32_t imm = (insn32 >> 3) & 0xffff;
                                 uint32_t a = insn32 & 0b111;
                                 fprintf_func(stream, "0x%08x; CMPF32 R%dH,#0x%4x", insn32, a, imm);
+                            }
+                            break;
+                        }
+                        case 0b0010: //1110 1000 0010 0III IIII IIII IIII Iaaa MAXF32 RaH,#16FHi
+                        {
+                            if (((insn>>3) & 1) == 0)
+                            {
+                                length = 4;
+                                uint32_t imm = (insn32 >> 3) & 0xffff;
+                                uint32_t a = insn32 & 0b111;
+                                fprintf_func(stream, "0x%08x; MAXF32 R%dH,#0x%4x", insn32, a, imm);
+                            }
+                            break;
+                        }
+                        case 0b0011: //1110 1000 0011 0III IIII IIII IIII Iaaa MINF32 RaH,#16FHi
+                        {
+                            if (((insn>>3) & 1) == 0)
+                            {
+                                length = 4;
+                                uint32_t imm = (insn32 >> 3) & 0xffff;
+                                uint32_t a = insn32 & 0b111;
+                                fprintf_func(stream, "0x%08x; MINF32 R%dH,#0x%4x", insn32, a, imm);
                             }
                             break;
                         }

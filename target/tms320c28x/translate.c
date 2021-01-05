@@ -2881,6 +2881,17 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                                     }
                                     break;
                                 }
+                                case 0b010100: //1110 0110 1001 0100 0000 0000 00bb baaa CMPF32 RaH, RbH
+                                {
+                                    if ((insn2 >> 6) == 0)
+                                    {
+                                        uint32_t b = (insn2 >> 3) & 0b111;
+                                        uint32_t a = insn2 & 0b111;
+                                        gen_cmpf32_rah_rbh(ctx, a, b);
+                                        length = 4;
+                                    }
+                                    break;
+                                }
                                 case 0b010101: //1110 0110 1001 0101 0000 0000 00bb baaa ABSF32 RaH,RbH
                                 {
                                     if ((insn2 >> 6) == 0)
@@ -2903,13 +2914,13 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                                     }
                                     break;
                                 }
-                                case 0b010100: //1110 0110 1001 0100 0000 0000 00bb baaa CMPF32 RaH, RbH
+                                case 0b010111: //1110 0110 1001 0111 0000 0000 00bb baaa MINF32 RaH,RbH
                                 {
                                     if ((insn2 >> 6) == 0)
                                     {
                                         uint32_t b = (insn2 >> 3) & 0b111;
                                         uint32_t a = insn2 & 0b111;
-                                        gen_cmpf32_rah_rbh(ctx, a, b);
+                                        gen_minf32_rah_rbh(ctx, a, b);
                                         length = 4;
                                     }
                                     break;
@@ -2924,6 +2935,19 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                                         uint32_t b = (insn2 >> 3) & 0b111;
                                         uint32_t a = insn2 & 0b111;
                                         gen_maxf32_rah_rbh_mov32_rch_rdh(ctx, a, b, c, d);
+                                    }
+                                    break;
+                                }
+                                case 0b011101: //1110 0110 1001 1101 0000 dddc ccbb baaa MINF32 RaH,RbH || MOV32 RcH,RdH
+                                {
+                                    if ((insn2 >> 12) == 0)
+                                    {
+                                        length = 4;
+                                        uint32_t d = (insn2 >> 9) & 0b111;
+                                        uint32_t c = (insn2 >> 6) & 0b111;
+                                        uint32_t b = (insn2 >> 3) & 0b111;
+                                        uint32_t a = insn2 & 0b111;
+                                        gen_minf32_rah_rbh_mov32_rch_rdh(ctx, a, b, c, d);
                                     }
                                     break;
                                 }
@@ -3060,6 +3084,17 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                                 uint32_t imm = (insn << 13 | insn2 >> 3) & 0xffff;
                                 uint32_t a = insn2 & 0b111;
                                 gen_maxf32_rah_16fhi(ctx, a, imm);
+                            }
+                            break;
+                        }
+                        case 0b0011: //1110 1000 0011 0III IIII IIII IIII Iaaa MINF32 RaH,#16FHi
+                        {
+                            if (((insn>>3) & 1) == 0)
+                            {
+                                length = 4;
+                                uint32_t imm = (insn << 13 | insn2 >> 3) & 0xffff;
+                                uint32_t a = insn2 & 0b111;
+                                gen_minf32_rah_16fhi(ctx, a, imm);
                             }
                             break;
                         }

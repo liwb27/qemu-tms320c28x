@@ -676,6 +676,23 @@ uint32_t HELPER(fpu_maxf)(CPUTms320c28xState *env, uint32_t a, uint32_t b)
     return ret;
 }
 
+uint32_t HELPER(fpu_minf)(CPUTms320c28xState *env, uint32_t a, uint32_t b)
+{
+    //Negative zero will be treated as positive zero. ---------checked
+    //A denormalized value will be treated as positive zero.
+    env->fp_status.flush_inputs_to_zero = 1;
+    //Not-a-Number (NaN) will be treated as infinity.
+    if (a == 0x7FBFFFFF)
+        a = 0x7F800000;
+    if (b == 0x7FBFFFFF)
+        b = 0x7F800000;
+
+    set_round_mode(env);
+    uint32_t ret = float32_min(a, b, &env->fp_status);
+    helper_fpu_cmpf(env, a, b);//set ZF,NF bit
+    return ret;
+}
+
 uint32_t HELPER(fpu_f32toi16)(CPUTms320c28xState *env, uint32_t value)
 {
     env->fp_status.float_rounding_mode = float_round_to_zero;
