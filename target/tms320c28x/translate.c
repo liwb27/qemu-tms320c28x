@@ -2513,6 +2513,17 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                 case 0b0000: //1110 0000 .... ....
                 {
                     switch((insn & 0x00f0) >> 4) {
+                        case 0b0000: //1110 0000 0000 fffe eedd daaa mem32 MPYF32 RdH,ReH,RfH || MOV32 mem32,RaH
+                        {
+                            length = 4;
+                            uint32_t mem32 = insn2 & 0xff;
+                            uint32_t a = (insn2 >> 8) & 0b111;
+                            uint32_t d = (insn2 >> 11) & 0b111;
+                            uint32_t e = ((insn2 >> 14) | (insn << 2)) & 0b111;
+                            uint32_t f = (insn >> 1) & 0b111;
+                            gen_mpyf32_rdh_reh_rfh_mov32_mem32_rah(ctx, d, e, f, mem32, a);
+                            break;
+                        }
                         case 0b0001: //1110 0000 0001 fffe eedd daaa mem32 ADDF32 RdH, ReH, RfH || MOV32 mem32, RaH
                         {
                             length = 4;
@@ -2681,6 +2692,17 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                 case 0b0011: //1110 0011 .... ....
                 {
                     switch((insn & 0x00f0) >> 4) {
+                        case 0b0000: //1110 0011 0000 fffe eedd daaa mem32 MPYF32 RdH,ReH,RfH || MOV32 RaH,mem32
+                        {
+                            length = 4;
+                            uint32_t mem32 = insn2 & 0xff;
+                            uint32_t a = (insn2 >> 8) & 0b111;
+                            uint32_t d = (insn2 >> 11) & 0b111;
+                            uint32_t e = ((insn2 >> 14) | (insn << 2)) & 0b111;
+                            uint32_t f = (insn >> 1) & 0b111;
+                            gen_mpyf32_rdh_reh_rfh_mov32_rah_mem32(ctx, d, e, f, a, mem32);
+                            break;
+                        }
                         case 0b0001: //1110 0011 0001 fffe eedd daaa mem32 ADDF32 RdH, ReH, RfH || MOV32 RaH, mem32
                         {
                             length = 4;
@@ -3016,6 +3038,18 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                             gen_addf32_rah_rbh_rch(ctx, a, b, c);
                             break;
                         }
+                        case 0b0010: //1110 0111 0010 ....
+                        {
+                            if (((insn & 0xf) == 0) && ((insn2 >> 9) == 0))//1110 0111 0010 0000 0000 000c ccbb baaa SUBF32 RaH,RbH,RcH
+                            {
+                                length = 4;
+                                uint32_t c = (insn2 >> 6) & 0b111;
+                                uint32_t b = (insn2 >> 3) & 0b111;
+                                uint32_t a = insn2 & 0b111;
+                                gen_subf32_rah_rbh_rch(ctx, a, b, c);
+                            }
+                            break;
+                        }
                         case 0b0100: //1110 0111 0100 ....
                         {
                             if (((insn>>2) & 0b11) == 0)//1110 0111 0100 00ff feee dddc ccbb baaa MPYF32 RaH, RbH, RcH || ADDF32 RdH, ReH, RfH 
@@ -3032,15 +3066,19 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                             }
                             break;
                         }
-                        case 0b0010: //1110 0111 0010 ....
+                        case 0b0101: //1110 0111 0101 ....
                         {
-                            if (((insn & 0xf) == 0) && ((insn2 >> 9) == 0))//1110 0111 0010 0000 0000 000c ccbb baaa SUBF32 RaH,RbH,RcH
+                            if (((insn>>2) & 0b11) == 0)//1110 0111 0100 00ff feee dddc ccbb baaa MPYF32 RaH, RbH, RcH || SUBF32 RdH, ReH, RfH 
                             {
                                 length = 4;
-                                uint32_t c = (insn2 >> 6) & 0b111;
-                                uint32_t b = (insn2 >> 3) & 0b111;
                                 uint32_t a = insn2 & 0b111;
-                                gen_subf32_rah_rbh_rch(ctx, a, b, c);
+                                uint32_t b = (insn2 >> 3) & 0b111;
+                                uint32_t c = (insn2 >> 6) & 0b111;
+                                uint32_t d = (insn2 >> 9) & 0b111;
+                                uint32_t e = (insn2 >> 12) & 0b111;
+                                uint32_t f = ((insn & 0b11) << 1) | (insn2 >> 15);
+                                if (a != d)
+                                    gen_mpyf32_rah_rbh_rch_subf32_rdh_reh_rfh(ctx, a, b, c, d, e, f);
                             }
                             break;
                         }

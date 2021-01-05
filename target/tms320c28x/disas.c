@@ -3188,6 +3188,18 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                 case 0b0000: //1110 0000 .... ....
                 {
                     switch((insn & 0x00f0) >> 4) {
+                        case 0b0000: //1110 0000 0000 fffe eedd daaa mem32 MPYF32 RdH,ReH,RfH || MOV32 mem32,RaH
+                        {
+                            length = 4;
+                            uint32_t mem32 = insn32 & 0xff;
+                            uint32_t a = (insn32 >> 8) & 0b111;
+                            uint32_t d = (insn32 >> 11) & 0b111;
+                            uint32_t e = (insn32 >> 14) & 0b111;
+                            uint32_t f = (insn >> 1) & 0b111;
+                            get_loc_string(str, mem32, LOC32);
+                            fprintf_func(stream, "0x%08x; MPYF32 R%dH,R%dH,R%dH ||MOV32 %s,R%dH", insn32, d, e, f, str, a);
+                            break;
+                        }
                         case 0b0001: //1110 0000 0001 fffe eedd daaa mem32 ADDF32 RdH, ReH, RfH || MOV32 mem32, RaH
                         {
                             length = 4;
@@ -3372,6 +3384,18 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                 case 0b0011: //1110 0011 .... ....
                 {
                     switch((insn & 0x00f0) >> 4) {
+                        case 0b0000: //1110 0011 0000 fffe eedd daaa mem32 MPYF32 RdH, ReH, RfH || MOV32 RaH, mem32
+                        {
+                            length = 4;
+                            uint32_t mem32 = insn32 & 0xff;
+                            uint32_t a = (insn32 >> 8) & 0b111;
+                            uint32_t d = (insn32 >> 11) & 0b111;
+                            uint32_t e = (insn32 >> 14) & 0b111;
+                            uint32_t f = (insn >> 1) & 0b111;
+                            get_loc_string(str, mem32, LOC32);
+                            fprintf_func(stream, "0x%08x; MPYF32 R%dH,R%dH,R%dH ||MOV32 R%dH,%s", insn32, d, e, f, a, str);
+                            break;
+                        }
                         case 0b0001: //1110 0011 0001 fffe eedd daaa mem32 ADDF32 RdH, ReH, RfH || MOV32 RaH, mem32
                         {
                             length = 4;
@@ -3712,6 +3736,18 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                             fprintf_func(stream, "0x%08x; ADDF32 R%dH,R%dH,R%dH", insn32, a, b, c);
                             break;
                         }
+                        case 0b0010: //1110 0111 0010 ....
+                        {
+                            if (((insn32 >> 9) & 0b11111111111) == 0)//1110 0111 0010 0000 0000 000c ccbb baaa SUBF32 RaH,RbH,RcH
+                            {
+                                length = 4;
+                                uint32_t c = (insn32 >> 6) & 0b111;
+                                uint32_t b = (insn32 >> 3) & 0b111;
+                                uint32_t a = insn32 & 0b111;
+                                fprintf_func(stream, "0x%08x; SUBF32 R%dH,R%dH,R%dH", insn32, a, b, c);
+                            }
+                            break;
+                        }
                         case 0b0100: //1110 0111 0100 ....
                         {
                             if (((insn32>>18) & 0b11) == 0)//1110 0111 0100 00ff feee dddc ccbb baaa MPYF32 RaH, RbH, RcH || ADDF32 RdH, ReH, RfH 
@@ -3727,15 +3763,18 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                             }
                             break;
                         }
-                        case 0b0010: //1110 0111 0010 ....
+                        case 0b0101: //1110 0111 0101 ....
                         {
-                            if (((insn32 >> 9) & 0b11111111111) == 0)//1110 0111 0010 0000 0000 000c ccbb baaa SUBF32 RaH,RbH,RcH
+                            if (((insn>>2) & 0b11) == 0)//1110 0111 0100 00ff feee dddc ccbb baaa MPYF32 RaH, RbH, RcH || SUBF32 RdH, ReH, RfH 
                             {
                                 length = 4;
-                                uint32_t c = (insn32 >> 6) & 0b111;
-                                uint32_t b = (insn32 >> 3) & 0b111;
                                 uint32_t a = insn32 & 0b111;
-                                fprintf_func(stream, "0x%08x; SUBF32 R%dH,R%dH,R%dH", insn32, a, b, c);
+                                uint32_t b = (insn32 >> 3) & 0b111;
+                                uint32_t c = (insn32 >> 6) & 0b111;
+                                uint32_t d = (insn32 >> 9) & 0b111;
+                                uint32_t e = (insn32 >> 12) & 0b111;
+                                uint32_t f = (insn32 >> 15) & 0b111;
+                                fprintf_func(stream, "0x%08x; MPYF32 R%dH,R%dH,R%dH || SUBF32 R%dH,R%dH,R%dH", insn32, a, b, c, d, e, f);
                             }
                             break;
                         }

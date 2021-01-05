@@ -43,13 +43,13 @@ static void gen_addf32_rdh_reh_rfh_mov32_rah_mem32(DisasContext *ctx, uint32_t d
     {
         return;
     }
+    //add
+    gen_helper_fpu_addf(cpu_rh[d], cpu_env, cpu_rh[e], cpu_rh[f]);
+    gen_sync_fpu_mem(d);
     //save to rah
     gen_ld_loc32(cpu_rh[a], mem32);
     gen_test_nf_ni_zf_zi(cpu_rh[a]);
     gen_sync_fpu_mem(a);
-    //add
-    gen_helper_fpu_addf(cpu_rh[d], cpu_env, cpu_rh[e], cpu_rh[f]);
-    gen_sync_fpu_mem(d);
 }
 
 //CMPF32 RaH, RbH
@@ -176,15 +176,25 @@ static void gen_macf32_r3h_r2h_rdh_reh_rfh_mov32_rah_mem32(DisasContext *ctx, ui
     {
         return;
     }
+    //乘加同步进行，提前存储各寄存器值
+    TCGv tmp_3 = cpu_tmp[0];
+    TCGv tmp_2 = cpu_tmp[1];
+    TCGv tmp_e = cpu_tmp[2];
+    TCGv tmp_f = cpu_tmp[3];
+    tcg_gen_mov_i32(tmp_3, cpu_rh[3]);
+    tcg_gen_mov_i32(tmp_2, cpu_rh[2]);
+    tcg_gen_mov_i32(tmp_e, cpu_rh[e]);
+    tcg_gen_mov_i32(tmp_f, cpu_rh[f]);
+
+    //macf
+    gen_helper_fpu_mpyf(cpu_rh[d], cpu_env, tmp_e, tmp_f);
+    gen_sync_fpu_mem(d);
+    gen_helper_fpu_addf(cpu_rh[3], cpu_env, tmp_3, tmp_2);
+    gen_sync_fpu_mem(3);
     //save to rah
     gen_ld_loc32(cpu_rh[a], mem32);
     gen_test_nf_ni_zf_zi(cpu_rh[a]);
     gen_sync_fpu_mem(a);
-    //macf
-    gen_helper_fpu_addf(cpu_rh[3], cpu_env, cpu_rh[3], cpu_rh[2]);
-    gen_sync_fpu_mem(3);
-    gen_helper_fpu_mpyf(cpu_rh[d], cpu_env, cpu_rh[e], cpu_rh[f]);
-    gen_sync_fpu_mem(d);
 }
 
 // MACF32 R7H,R3H,mem32,*XAR7++
@@ -252,15 +262,24 @@ static void gen_macf32_r7h_r6h_rdh_reh_rfh_mov32_rah_mem32(DisasContext *ctx, ui
     {
         return;
     }
+    //乘加同步进行，提前存储各寄存器值
+    TCGv tmp_7 = cpu_tmp[0];
+    TCGv tmp_6 = cpu_tmp[1];
+    TCGv tmp_e = cpu_tmp[2];
+    TCGv tmp_f = cpu_tmp[3];
+    tcg_gen_mov_i32(tmp_7, cpu_rh[7]);
+    tcg_gen_mov_i32(tmp_6, cpu_rh[6]);
+    tcg_gen_mov_i32(tmp_e, cpu_rh[e]);
+    tcg_gen_mov_i32(tmp_f, cpu_rh[f]);
+    //macf
+    gen_helper_fpu_addf(cpu_rh[7], cpu_env, tmp_7, tmp_6);
+    gen_sync_fpu_mem(3);
+    gen_helper_fpu_mpyf(cpu_rh[d], cpu_env, tmp_e, tmp_f);
+    gen_sync_fpu_mem(d);
     //save to rah
     gen_ld_loc32(cpu_rh[a], mem32);
     gen_test_nf_ni_zf_zi(cpu_rh[a]);
     gen_sync_fpu_mem(a);
-    //macf
-    gen_helper_fpu_addf(cpu_rh[7], cpu_env, cpu_rh[7], cpu_rh[6]);
-    gen_sync_fpu_mem(3);
-    gen_helper_fpu_mpyf(cpu_rh[d], cpu_env, cpu_rh[e], cpu_rh[f]);
-    gen_sync_fpu_mem(d);
 }
 
 // MAXF32 RaH,RbH
@@ -582,12 +601,14 @@ static void gen_movxi_rah_16flohex(DisasContext *ctx, uint32_t a, uint32_t lo)
     gen_sync_fpu_mem(a);
 }
 
+//MPYF32 RaH,RbH,RcH
 static void gen_mpyf32_rah_rbh_rch(DisasContext *ctx, uint32_t a, uint32_t b, uint32_t c)
 {
     gen_helper_fpu_mpyf(cpu_rh[a], cpu_env, cpu_rh[b], cpu_rh[c]);
     gen_sync_fpu_mem(a);
 }
 
+//MPYF32 RaH,#16FHi,RbH
 static void gen_mpyf32_rah_16fhi_rbh(DisasContext *ctx, uint32_t a, uint32_t hi, uint32_t b)
 {
     TCGv tmp = cpu_tmp[0];
@@ -597,11 +618,71 @@ static void gen_mpyf32_rah_16fhi_rbh(DisasContext *ctx, uint32_t a, uint32_t hi,
     gen_sync_fpu_mem(a);
 }
 
+//MPYF32 RaH,RbH,RcH || ADDF32 RdH,ReH,RfH
 static void gen_mpyf32_rah_rbh_rch_addf32_rdh_reh_rfh(DisasContext *ctx, uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e, uint32_t f)
 {
-    gen_helper_fpu_mpyf(cpu_rh[a], cpu_env, cpu_rh[b], cpu_rh[c]);
+    //乘加同步进行，提前存储各寄存器值
+    TCGv tmp_b = cpu_tmp[0];
+    TCGv tmp_c = cpu_tmp[1];
+    TCGv tmp_e = cpu_tmp[2];
+    TCGv tmp_f = cpu_tmp[3];
+    tcg_gen_mov_i32(tmp_b, cpu_rh[b]);
+    tcg_gen_mov_i32(tmp_c, cpu_rh[c]);
+    tcg_gen_mov_i32(tmp_e, cpu_rh[e]);
+    tcg_gen_mov_i32(tmp_f, cpu_rh[f]);
+
+    gen_helper_fpu_mpyf(cpu_rh[a], cpu_env, tmp_b, tmp_c);
     gen_sync_fpu_mem(a);
-    gen_helper_fpu_addf(cpu_rh[d], cpu_env, cpu_rh[e], cpu_rh[f]);
+    gen_helper_fpu_addf(cpu_rh[d], cpu_env, tmp_e, tmp_f);
+    gen_sync_fpu_mem(d);
+}
+
+//MPYF32 RaH,RbH,RcH || SUBF32 RdH,ReH,RfH
+static void gen_mpyf32_rah_rbh_rch_subf32_rdh_reh_rfh(DisasContext *ctx, uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e, uint32_t f)
+{
+    //乘加同步进行，提前存储各寄存器值
+    TCGv tmp_b = cpu_tmp[0];
+    TCGv tmp_c = cpu_tmp[1];
+    TCGv tmp_e = cpu_tmp[2];
+    TCGv tmp_f = cpu_tmp[3];
+    tcg_gen_mov_i32(tmp_b, cpu_rh[b]);
+    tcg_gen_mov_i32(tmp_c, cpu_rh[c]);
+    tcg_gen_mov_i32(tmp_e, cpu_rh[e]);
+    tcg_gen_mov_i32(tmp_f, cpu_rh[f]);
+
+    gen_helper_fpu_mpyf(cpu_rh[a], cpu_env, tmp_b, tmp_c);
+    gen_sync_fpu_mem(a);
+    gen_helper_fpu_subf(cpu_rh[d], cpu_env, tmp_e, tmp_f);
+    gen_sync_fpu_mem(d);
+}
+
+//MPYF32 RdH, ReH, RfH || MOV32 RaH,mem32
+static void gen_mpyf32_rdh_reh_rfh_mov32_rah_mem32(DisasContext *ctx, uint32_t d, uint32_t e, uint32_t f, uint32_t a, uint32_t mem32)
+{
+    if(is_reg_addressing_mode(mem32, LOC32))
+    {
+        return;
+    }
+    //mpy
+    gen_helper_fpu_mpyf(cpu_rh[d], cpu_env, cpu_rh[e], cpu_rh[f]);
+    gen_sync_fpu_mem(d);
+    //save to rah
+    gen_ld_loc32(cpu_rh[a], mem32);
+    gen_test_nf_ni_zf_zi(cpu_rh[a]);
+    gen_sync_fpu_mem(a);
+}
+
+//MPYF32 RdH, ReH, RfH || MOV32 mem32, RaH
+static void gen_mpyf32_rdh_reh_rfh_mov32_mem32_rah(DisasContext *ctx, uint32_t d, uint32_t e, uint32_t f, uint32_t mem32, uint32_t a)
+{
+    if(is_reg_addressing_mode(mem32, LOC32))
+    {
+        return;
+    }
+    //save to mem32 first
+    gen_st_loc32(mem32, cpu_rh[a]);
+    //add
+    gen_helper_fpu_mpyf(cpu_rh[d], cpu_env, cpu_rh[e], cpu_rh[f]);
     gen_sync_fpu_mem(d);
 }
 
@@ -629,13 +710,13 @@ static void gen_subf32_rdh_reh_rfh_mov32_rah_mem32(DisasContext *ctx, uint32_t d
     {
         return;
     }
+    //sub
+    gen_helper_fpu_subf(cpu_rh[d], cpu_env, cpu_rh[e], cpu_rh[f]);
+    gen_sync_fpu_mem(d);
     //save to rah
     gen_ld_loc32(cpu_rh[a], mem32);
     gen_test_nf_ni_zf_zi(cpu_rh[a]);
     gen_sync_fpu_mem(a);
-    //sub
-    gen_helper_fpu_subf(cpu_rh[d], cpu_env, cpu_rh[e], cpu_rh[f]);
-    gen_sync_fpu_mem(d);
 }
 
 //SUBF32 RdH, ReH, RfH || MOV32 mem32, RaH
