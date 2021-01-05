@@ -686,6 +686,15 @@ static void gen_mpyf32_rdh_reh_rfh_mov32_mem32_rah(DisasContext *ctx, uint32_t d
     gen_sync_fpu_mem(d);
 }
 
+
+//NEGF32 RaH, RbH {, CNDF}
+static void gen_negf32_rah_rbh_cndf(DisasContext *ctx, uint32_t a, uint32_t b, uint32_t cndf)
+{
+    TCGv condf_tcg = cpu_tmp[1];
+    tcg_gen_movi_i32(condf_tcg, cndf);
+    gen_helper_fpu_negf_cndf(cpu_rh[a], cpu_env, cpu_rh[b], condf_tcg);
+}
+
 // SUBF32 RaH, RbH, RcH
 static void gen_subf32_rah_rbh_rch(DisasContext *ctx, uint32_t a, uint32_t b, uint32_t c)
 {

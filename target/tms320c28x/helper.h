@@ -92,6 +92,7 @@ DEF_HELPER_2(fpu_eisqrtf, i32, env, i32)// einvf32, modify LUF,LVF bit
 DEF_HELPER_2(fpu_fracf32, i32, env, i32)//RaH = fractional portion of Rbh
 DEF_HELPER_3(fpu_subf, i32, env, i32, i32)// ret = subf(a,b), modify LUF,LVF bit
 DEF_HELPER_3(fpu_mpyf, i32, env, i32, i32)// ret = mpyf(a,b), modify LUF,LVF bit
+DEF_HELPER_3(fpu_negf_cndf, i32, env, i32, i32)// a = neg(b) if true,else a = b, modify NF,ZF bit
 
 //fpu max/min
 DEF_HELPER_3(fpu_maxf, i32, env, i32, i32)// a = max(a,b), modify ZF,NF bit

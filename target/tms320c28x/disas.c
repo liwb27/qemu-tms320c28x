@@ -3670,6 +3670,34 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                                     }
                                     break;
                                 }
+                                                                case 0b100000:
+                                case 0b100001:
+                                case 0b100010:
+                                case 0b100011:
+                                case 0b100100:
+                                case 0b100101:
+                                case 0b100110:
+                                case 0b100111:
+                                case 0b101000:
+                                case 0b101001:
+                                case 0b101010:
+                                case 0b101011:
+                                case 0b101100:
+                                case 0b101101:
+                                case 0b101110:
+                                case 0b101111://1110 0110 1010 CNDF 0000 0000 00bb baaa NEGF32 RaH,RbH{,CNDF}
+                                {
+                                    if (((insn32 & 0xffff) >> 6) == 0)
+                                    {
+                                        uint32_t b = (insn32 >> 3) & 0b111;
+                                        uint32_t a = insn32 & 0b111;
+                                        uint32_t cndf = insn & 0xf;
+                                        get_condf_string(str, cndf);
+                                        length = 4;
+                                        fprintf_func(stream, "0x%08x; NEGF32 R%dH,R%dH,%s", insn32, a, b, str);
+                                    }
+                                    break;
+                                }
                             }
                             break;
                         }

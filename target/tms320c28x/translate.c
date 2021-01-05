@@ -2973,6 +2973,33 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                                     }
                                     break;
                                 }
+                                case 0b100000:
+                                case 0b100001:
+                                case 0b100010:
+                                case 0b100011:
+                                case 0b100100:
+                                case 0b100101:
+                                case 0b100110:
+                                case 0b100111:
+                                case 0b101000:
+                                case 0b101001:
+                                case 0b101010:
+                                case 0b101011:
+                                case 0b101100:
+                                case 0b101101:
+                                case 0b101110:
+                                case 0b101111://1110 0110 1010 CNDF 0000 0000 00bb baaa NEGF32 RaH,RbH{,CNDF}
+                                {
+                                    if ((insn2 >> 6) == 0)
+                                    {
+                                        uint32_t b = (insn2 >> 3) & 0b111;
+                                        uint32_t a = insn2 & 0b111;
+                                        uint32_t cndf = insn & 0xf;
+                                        gen_negf32_rah_rbh_cndf(ctx, a, b, cndf);
+                                        length = 4;
+                                    }
+                                    break;
+                                }
                             }
                             break;
                         }

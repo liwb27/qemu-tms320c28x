@@ -659,6 +659,39 @@ uint32_t HELPER(fpu_mpyf)(CPUTms320c28xState *env, uint32_t a, uint32_t b)
     return ret;
 }
 
+uint32_t HELPER(fpu_negf_cndf)(CPUTms320c28xState *env, uint32_t b, uint32_t cndf)
+{
+    uint32_t ret;
+    if (helper_test_condf(env, cndf) == true)
+    {
+        ret = float32_sub(0, b, &env->fp_status);
+        int flag = float32_compare(ret, 0, &env->fp_status);
+        switch(flag)
+        {
+            case float_relation_less://If(ret < 0) {ZF=0, NF=1}
+                cpu_set_stf(env, 0, ZF_BIT, ZF_MASK);
+                cpu_set_stf(env, 1, NF_BIT, NF_MASK);
+                break;
+            case float_relation_equal://If(ret == 0) {ZF=1, NF=0}
+                cpu_set_stf(env, 1, ZF_BIT, ZF_MASK);
+                cpu_set_stf(env, 0, NF_BIT, NF_MASK);
+                break;
+            case float_relation_greater://If(ret > 0) {ZF=0, NF=0}
+                cpu_set_stf(env, 0, ZF_BIT, ZF_MASK);
+                cpu_set_stf(env, 0, NF_BIT, NF_MASK);
+                break;
+            case float_relation_unordered:
+            default:
+                g_assert_not_reached();
+        }
+    }
+    else
+    {
+        ret = b;
+    }
+    return ret;
+}
+
 uint32_t HELPER(fpu_maxf)(CPUTms320c28xState *env, uint32_t a, uint32_t b)
 {
     //Negative zero will be treated as positive zero. ---------checked
