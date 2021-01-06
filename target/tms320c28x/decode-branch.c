@@ -814,7 +814,7 @@ static void gen_rptb_loc16(DisasContext *ctx, uint32_t rsize, uint32_t mode)
 static void gen_repeat_block(DisasContext *ctx)
 {
     gen_reset_rptc(ctx);
-    ctx->base.is_jmp = DISAS_JUMP;
+    // ctx->base.is_jmp = DISAS_JUMP;
 
     TCGv tmp = cpu_tmp[0];
     gen_get_bit(tmp, cpu_rb, RC_BIT, RC_MASK);
