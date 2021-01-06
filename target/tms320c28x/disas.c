@@ -417,7 +417,10 @@ static void get_setflg_string(char *str, uint32_t f, uint32_t v) {
         sprintf(str+i, "RNDF64=%d,",(v>>10) & 1);
         i += 9;
     }
-    str[i-1] = 0;
+    if (i != 0)
+        str[i-1] = 0;
+    else
+        str[i] = 0;
 }
 
 int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
@@ -3499,6 +3502,18 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                 case 0b0101: //1110 0101 .... ....
                 {
                     switch((insn & 0x00f0) >> 4) {
+                        case 0b0110://1110 0101 0110 ....
+                        {
+                            switch(insn & 0xf)
+                            {
+                                case 0b0010://1110 0101 0110 0010 RESTORE
+                                {
+                                    fprintf_func(stream, "0x%04x;     RESTORE", insn);
+                                    break;
+                                }
+                            }
+                            break;
+                        }
                         case 0b1010://1110 0101 1010 0aaa CMPF32 RaH,#0.0
                         {
                             if (((insn>>3) & 1) == 0)
@@ -3526,6 +3541,10 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                         case 0b01://1110 0110 01FF FFFF FFFF FVVV VVVV VVVV SAVE FLAG,VALUE
                         {
                             length = 4;
+                            uint32_t f = (insn32 >> 11) & 0x7ff;
+                            uint32_t v = insn32 & 0x7ff;
+                            get_setflg_string(str, f, v);
+                            fprintf_func(stream, "0x%08x; SAVE %s", insn32, str);
                             break;
                         }
                         case 0b10://1110 0110 10.. ....

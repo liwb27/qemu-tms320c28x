@@ -703,13 +703,26 @@ static void gen_push_rb(DisasContext *ctx)
 }
 
 // POP RB
-static void gen_pop_rb(DisasContext *ctx) {
+static void gen_pop_rb(DisasContext *ctx) 
+{
     tcg_gen_subi_i32(cpu_sp, cpu_sp, 2);
     gen_ld16u_swap(cpu_rb, cpu_sp);
 }
 
+// RESTORE
+static void gen_restore(DisasContext *ctx) 
+{
+    //load R0H~R7H,STF from shadow reg
+    for (int i=0; i <8; i++)
+        tcg_gen_mov_i32(cpu_rh[i], cpu_rh_shadow[i]);
+    tcg_gen_mov_i32(cpu_stf, cpu_stf_shadow);
+    //set SHDWM flag
+    gen_seti_bit(cpu_stf, SHDWS_BIT, SHDWS_MASK, 0);
+}
+
 // SETFLG FLAG,VALUE
-static void gen_setflg_flag_value(DisasContext *ctx, uint32_t f, uint32_t v) {
+static void gen_setflg_flag_value(DisasContext *ctx, uint32_t f, uint32_t v) 
+{
     if (((f>>0) & 1) == 1) {
         gen_seti_bit(cpu_stf, LVF_BIT, LVF_MASK, (v>>0) & 1);
     }
@@ -734,6 +747,19 @@ static void gen_setflg_flag_value(DisasContext *ctx, uint32_t f, uint32_t v) {
     if (((f>>9) & 1) == 1) {
         gen_seti_bit(cpu_stf, RND32_BIT, RND32_MASK, (v>>9) & 1);
     }
+}
+
+// SAVE FLAG,VALUE
+static void gen_save_flag_value(DisasContext *ctx, uint32_t f, uint32_t v) 
+{
+    //save R0H~R7H,STF to shadow reg
+    for (int i=0; i <8; i++)
+        tcg_gen_mov_i32(cpu_rh_shadow[i], cpu_rh[i]);
+    tcg_gen_mov_i32(cpu_stf_shadow, cpu_stf);
+    //set flag
+    gen_setflg_flag_value(ctx, f, v);
+    //set SHDWM flag
+    gen_seti_bit(cpu_stf, SHDWS_BIT, SHDWS_MASK, 1);
 }
 
 // SUBF32 RaH, RbH, RcH

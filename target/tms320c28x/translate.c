@@ -64,7 +64,9 @@ static TCGv cpu_st1; /* Status register 1, reset to 0x080b */
 static TCGv cpu_xt;         /* Multiplicand register, todo:t,tl*/
 static TCGv cpu_rb;
 static TCGv cpu_stf;
+static TCGv cpu_stf_shadow;
 static TCGv cpu_rh[8];
+static TCGv cpu_rh_shadow[8];
 static TCGv cpu_rptc;
 // static TCGv cpu_tmp[8];
 static TCGv cpu_insn_length;
@@ -75,52 +77,38 @@ void tms320c28x_translate_init(void)
     static const char * const regnames[] = {
         "xar0", "xar1", "xar2", "xar3", "xar4", "xar5", "xar6", "xar7",
     };
-    // static const char * const regnames2[] = {
-    //     "shadow0", "shadow1", "shadow2", "shadow3", "shadow4", "shadow5", "shadow6", "shadow7",
-    // };
     static const char * const regnames2[] = {
         "tmp0", "tmp1", "tmp2", "tmp3", "tmp4", "tmp5", "tmp6", "tmp7",
     };
     static const char * const regnames3[] = {
         "r0h", "r1h", "r2h", "r3h", "r4h", "r5h", "r6h", "r7h",
     };
+    static const char * const regnames4[] = {
+        "r0h_shadow", "r1h_shadow", "r2h_shadow", "r3h_shadow", "r4h_shadow", "r5h_shadow", "r6h_shadow", "r7h_shadow",
+    };
     int i;
 
-    cpu_acc = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, acc), "acc");
-    cpu_dp = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, dp), "dp");
-    cpu_ifr = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, ifr), "ifr");
-    cpu_ier = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, ier), "ier");
-    cpu_dbgier = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, dbgier), "dbgier");
-    cpu_p = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, p), "p");
-    cpu_pc = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, pc), "pc");
-    cpu_rpc = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, rpc), "rpc");
-    cpu_sp = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, sp), "sp");
-    cpu_st0 = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, st0), "st0");
-    cpu_st1 = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, st1), "st1");
-    cpu_xt = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, xt), "xt");
-    cpu_rptc = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, rptc), "rptc");
-    cpu_rb = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, rb), "rb");
-    cpu_stf = tcg_global_mem_new(cpu_env,
-                                offsetof(CPUTms320c28xState, stf), "stf");
+    cpu_acc = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, acc), "acc");
+    cpu_dp = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, dp), "dp");
+    cpu_ifr = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, ifr), "ifr");
+    cpu_ier = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, ier), "ier");
+    cpu_dbgier = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, dbgier), "dbgier");
+    cpu_p = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, p), "p");
+    cpu_pc = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, pc), "pc");
+    cpu_rpc = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, rpc), "rpc");
+    cpu_sp = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, sp), "sp");
+    cpu_st0 = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, st0), "st0");
+    cpu_st1 = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, st1), "st1");
+    cpu_xt = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, xt), "xt");
+    cpu_rptc = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, rptc), "rptc");
+    cpu_rb = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, rb), "rb");
+    cpu_stf = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, stf), "stf");
+    cpu_stf_shadow = tcg_global_mem_new(cpu_env, offsetof(CPUTms320c28xState, stf_shadow), "stf_shadow");
     for (i = 0; i < 8; i++) {
         cpu_xar[i] = tcg_global_mem_new(cpu_env,offsetof(CPUTms320c28xState,xar[i]),regnames[i]);
-        // cpu_tmp[i] = tcg_global_mem_new(cpu_env,offsetof(CPUTms320c28xState,shadow[i]),regnames2[i]);
         cpu_tmp[i] = tcg_global_mem_new(cpu_env,offsetof(CPUTms320c28xState,tmp[i]),regnames2[i]);
         cpu_rh[i] = tcg_global_mem_new(cpu_env,offsetof(CPUTms320c28xState,rh[i]),regnames3[i]);
+        cpu_rh_shadow[i] = tcg_global_mem_new(cpu_env,offsetof(CPUTms320c28xState,rh_shadow[i]),regnames4[i]);
     }
     cpu_insn_length = tcg_global_mem_new(cpu_env,
                                 offsetof(CPUTms320c28xState, insn_length), "insn_length");
@@ -2753,6 +2741,18 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                 case 0b0101: //1110 0101 .... ....
                 {
                     switch((insn & 0x00f0) >> 4) {
+                        case 0b0110://1110 0101 0110 ....
+                        {
+                            switch(insn & 0xf)
+                            {
+                                case 0b0010://1110 0101 0110 0010 RESTORE
+                                {
+                                    gen_restore(ctx);
+                                    break;
+                                }
+                            }
+                            break;
+                        }
                         case 0b1010://1110 0101 1010 0aaa CMPF32 RaH,#0.0
                         {
                             if (((insn>>3) & 1) == 0)
@@ -2779,6 +2779,9 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                         case 0b01://1110 0110 01FF FFFF FFFF FVVV VVVV VVVV SAVE FLAG,VALUE
                         {
                             length = 4;
+                            uint32_t f = (insn2>>11) | (insn & 0x3f) <<5;
+                            uint32_t v = insn2 & 0x7ff;
+                            gen_save_flag_value(ctx, f, v);
                             break;
                         }
                         case 0b10://1110 0110 10.. ....
