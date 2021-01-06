@@ -2753,6 +2753,12 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                             }
                             break;
                         }
+                        case 0b1000://1110 0101 1000 CNDF TESTTF CNDF
+                        {
+                            uint32_t cndf = insn & 0xf;
+                            gen_testtf_cndf(ctx, cndf);
+                            break;
+                        }
                         case 0b1010://1110 0101 1010 0aaa CMPF32 RaH,#0.0
                         {
                             if (((insn>>3) & 1) == 0)
@@ -3031,8 +3037,16 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                                 {
                                     break;
                                 }
-                                case 0b10:
+                                case 0b10://1110 0110 1110 CNDF 0000 0000 00bb baaa SWAPF RaH,RbH{,CNDF}
                                 {
+                                    if ((insn2 >> 6) == 0)
+                                    {
+                                        length = 4;
+                                        uint32_t b = (insn2 >> 3) & 0b111;
+                                        uint32_t a = insn2 & 0b111;
+                                        uint32_t cndf = insn & 0xf;
+                                        gen_swapf_rah_rbh_cndf(ctx, a, b, cndf);
+                                    }
                                     break;
                                 }
                                 case 0b11://1110 0110 1111 ....

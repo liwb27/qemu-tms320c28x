@@ -809,6 +809,44 @@ static void gen_subf32_rdh_reh_rfh_mov32_mem32_rah(DisasContext *ctx, uint32_t d
     gen_sync_fpu_mem(d);
 }
 
+// SWAPF RaH, RbH {, CNDF}
+static void gen_swapf_rah_rbh_cndf(DisasContext *ctx, uint32_t a, uint32_t b, uint32_t cndf)
+{
+    TCGLabel *done = gen_new_label();
+    TCGv test = cpu_tmp[0];
+    TCGv condf_tcg = cpu_tmp[1];
+    TCGv tmp = cpu_tmp[2];
+    tcg_gen_movi_i32(condf_tcg, cndf);
+    //if (CNDF == TRUE)
+    gen_helper_test_condf(test, cpu_env, condf_tcg);
+    tcg_gen_brcondi_i32(TCG_COND_EQ, test, 0, done);
+    //if (CNDF == TRUE) swap RaH,RbH
+    tcg_gen_mov_i32(tmp, cpu_rh[b]);//save to reg
+    tcg_gen_mov_i32(cpu_rh[b], cpu_rh[a]);
+    tcg_gen_mov_i32(cpu_rh[a], tmp);
+    gen_set_label(done);
+}
+
+// TESTTF CNDF
+static void gen_testtf_cndf(DisasContext *ctx, uint32_t cndf)
+{
+    TCGLabel *done = gen_new_label();
+    TCGLabel *test_false = gen_new_label();
+    TCGv test = cpu_tmp[0];
+    TCGv condf_tcg = cpu_tmp[1];
+    tcg_gen_movi_i32(condf_tcg, cndf);
+    //if (CNDF == TRUE)
+    gen_helper_test_condf(test, cpu_env, condf_tcg);
+    tcg_gen_brcondi_i32(TCG_COND_EQ, test, 0, test_false);
+    //if (CNDF == TRUE) tf=1
+    gen_seti_bit(cpu_stf, TF_BIT, TF_MASK, 1);
+    tcg_gen_br(done);
+    //CNDF==false
+    gen_set_label(test_false);
+    gen_seti_bit(cpu_stf, TF_BIT, TF_MASK, 0);
+    //end
+    gen_set_label(done);
+}
 
 //UI16TOF32 RaH,mem16
 static void gen_ui16tof32_rah_mem16(DisasContext *ctx, uint32_t a, uint32_t mem16)
