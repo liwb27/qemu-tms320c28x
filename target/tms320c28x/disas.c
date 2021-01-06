@@ -4252,6 +4252,23 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                             fprintf_func(stream, "0x%08x; B #%d,%s", insn32, imm, str);
                             break;
                         }
+                        case 0b1111://1111 1111 1111 ....
+                        {
+                            switch(insn & 0xf) 
+                            {
+                                case 0b0000://1111 1111 1111 0000 PUSH RB
+                                {
+                                    fprintf_func(stream, "0x%04x;     PUSH RB", insn);
+                                    break;
+                                }
+                                case 0b0001://1111 1111 1111 0001 POP RB
+                                {
+                                    fprintf_func(stream, "0x%04x;     POP RB", insn);
+                                    break;
+                                }
+                            }
+                            break;
+                        }
                     }
                     break;
             }

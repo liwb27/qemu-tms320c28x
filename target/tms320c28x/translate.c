@@ -3521,6 +3521,23 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                             gen_b_16bitOffset_cond(ctx, imm, cond);
                             break;
                         }
+                        case 0b1111://1111 1111 1111 ....
+                        {
+                            switch(insn & 0xf)
+                            {
+                                case 0b0000://1111 1111 1111 0000 PUSH RB
+                                {
+                                    gen_push_rb(ctx);
+                                    break;
+                                }
+                                case 0b0001://1111 1111 1111 0001 POP RB
+                                {
+                                    gen_pop_rb(ctx);
+                                    break;
+                                }
+                            }
+                            break;
+                        }
                     }
                     break;
             }

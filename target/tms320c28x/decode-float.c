@@ -695,6 +695,19 @@ static void gen_negf32_rah_rbh_cndf(DisasContext *ctx, uint32_t a, uint32_t b, u
     gen_helper_fpu_negf_cndf(cpu_rh[a], cpu_env, cpu_rh[b], condf_tcg);
 }
 
+//PUSH RB
+static void gen_push_rb(DisasContext *ctx)
+{
+    gen_st32u_swap(cpu_rb, cpu_sp);
+    tcg_gen_addi_i32(cpu_sp, cpu_sp, 2);
+}
+
+// POP RB
+static void gen_pop_rb(DisasContext *ctx) {
+    tcg_gen_subi_i32(cpu_sp, cpu_sp, 2);
+    gen_ld16u_swap(cpu_rb, cpu_sp);
+}
+
 // SUBF32 RaH, RbH, RcH
 static void gen_subf32_rah_rbh_rch(DisasContext *ctx, uint32_t a, uint32_t b, uint32_t c)
 {
