@@ -879,3 +879,17 @@ static void gen_ui32tof32_rah_rbh(DisasContext *ctx, uint32_t a, uint32_t b)
     gen_helper_fpu_ui32tof32(cpu_rh[a], cpu_env, cpu_rh[b]);
     gen_sync_fpu_mem(a);
 }
+
+//ZERO RaH
+static void gen_zero_rah(DisasContext *ctx, uint32_t a)
+{
+    tcg_gen_movi_i32(cpu_rh[a], 0);
+    gen_sync_fpu_mem(a);
+}
+
+//ZEROA
+static void gen_zeroa(DisasContext *ctx)
+{
+    for (int i = 0; i < 8; i++)
+        tcg_gen_movi_i32(cpu_rh[i], 0);
+}

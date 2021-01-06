@@ -3511,6 +3511,11 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                                     fprintf_func(stream, "0x%04x;     RESTORE", insn);
                                     break;
                                 }
+                                case 0b0011://1110 0101 0110 0011 ZEROA
+                                {
+                                    fprintf_func(stream, "0x%04x;     ZEROA", insn);
+                                    break;
+                                }
                             }
                             break;
                         }
@@ -3519,6 +3524,15 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                             uint32_t cndf = insn & 0xf;
                             get_condf_string(str, cndf);
                             fprintf_func(stream, "0x%04x;     TESTTF %s", insn, str);
+                            break;
+                        }
+                        case 0b1001://1110 0101 1001 ....
+                        {
+                            if (((insn >> 3) & 1) == 0)//1110 0101 1001 0aaa ZERO RaH
+                            {
+                                uint32_t a = insn & 0b111;
+                                fprintf_func(stream, "0x%04x;     ZERO R%dH", insn, a);
+                            }
                             break;
                         }
                         case 0b1010://1110 0101 1010 0aaa CMPF32 RaH,#0.0
