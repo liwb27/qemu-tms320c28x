@@ -2768,12 +2768,17 @@ static int decode(Tms320c28xCPU *cpu , DisasContext *ctx, uint32_t insn, uint32_
                 case 0b0110: //1110 0110 .... .... 
                 {
                     switch ((insn & 0x00c0) >> 6) {
-                        case 0b00:
+                        case 0b00://1110 0110 01FF FFFF FFFF FVVV VVVV VVVV SETFLG FLAG,VALUE
                         {
+                            length = 4;
+                            uint32_t f = (insn2>>11) | (insn & 0x3f) <<5;
+                            uint32_t v = insn2 & 0x7ff;
+                            gen_setflg_flag_value(ctx, f, v);
                             break;
                         }
-                        case 0b01://1110 0110 01.. ....
+                        case 0b01://1110 0110 01FF FFFF FFFF FVVV VVVV VVVV SAVE FLAG,VALUE
                         {
+                            length = 4;
                             break;
                         }
                         case 0b10://1110 0110 10.. ....

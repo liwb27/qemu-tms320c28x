@@ -708,6 +708,34 @@ static void gen_pop_rb(DisasContext *ctx) {
     gen_ld16u_swap(cpu_rb, cpu_sp);
 }
 
+// SETFLG FLAG,VALUE
+static void gen_setflg_flag_value(DisasContext *ctx, uint32_t f, uint32_t v) {
+    if (((f>>0) & 1) == 1) {
+        gen_seti_bit(cpu_stf, LVF_BIT, LVF_MASK, (v>>0) & 1);
+    }
+    if (((f>>1) & 1) == 1) {
+        gen_seti_bit(cpu_stf, LUF_BIT, LUF_MASK, (v>>1) & 1);
+    }
+    if (((f>>2) & 1) == 1) {
+        gen_seti_bit(cpu_stf, NF_BIT, NF_MASK, (v>>2) & 1);
+    }
+    if (((f>>3) & 1) == 1) {
+        gen_seti_bit(cpu_stf, ZF_BIT, ZF_MASK, (v>>3) & 1);
+    }
+    if (((f>>4) & 1) == 1) {
+        gen_seti_bit(cpu_stf, NI_BIT, NI_MASK, (v>>4) & 1);
+    }
+    if (((f>>5) & 1) == 1) {
+        gen_seti_bit(cpu_stf, ZI_BIT, ZI_MASK, (v>>5) & 1);
+    }
+    if (((f>>6) & 1) == 1) {
+        gen_seti_bit(cpu_stf, TF_BIT, TF_MASK, (v>>6) & 1);
+    }
+    if (((f>>9) & 1) == 1) {
+        gen_seti_bit(cpu_stf, RND32_BIT, RND32_MASK, (v>>9) & 1);
+    }
+}
+
 // SUBF32 RaH, RbH, RcH
 static void gen_subf32_rah_rbh_rch(DisasContext *ctx, uint32_t a, uint32_t b, uint32_t c)
 {

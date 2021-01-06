@@ -371,6 +371,55 @@ static void get_condf_string(char *str, uint32_t cond) {
     }
 }
 
+static void get_setflg_string(char *str, uint32_t f, uint32_t v) {
+    uint32_t i = 0;
+    if (((f>>0) & 1) == 1) {
+        sprintf(str+i, "LVF=%d,",(v>>0) & 1);
+        i += 6;
+    }
+    if (((f>>1) & 1) == 1) {
+        sprintf(str+i, "LUF=%d,",(v>>1) & 1);
+        i += 6;
+    }
+    if (((f>>2) & 1) == 1) {
+        sprintf(str+i, "NF=%d,",(v>>2) & 1);
+        i += 5;
+    }
+    if (((f>>3) & 1) == 1) {
+        sprintf(str+i, "ZF=%d,",(v>>3) & 1);
+        i += 5;
+    }
+    if (((f>>4) & 1) == 1) {
+        sprintf(str+i, "NI=%d,",(v>>4) & 1);
+        i += 5;
+    }
+    if (((f>>5) & 1) == 1) {
+        sprintf(str+i, "ZI=%d,",(v>>5) & 1);
+        i += 5;
+    }
+    if (((f>>6) & 1) == 1) {
+        sprintf(str+i, "TF=%d,",(v>>6) & 1);
+        i += 5;
+    }
+    if (((f>>7) & 1) == 1) {
+        sprintf(str+i, "RNDQ16=%d,",(v>>7) & 1);
+        i += 9;
+    }
+    if (((f>>8) & 1) == 1) {
+        sprintf(str+i, "RNDQ32=%d,",(v>>8) & 1);
+        i += 9;
+    }
+    if (((f>>9) & 1) == 1) {
+        sprintf(str+i, "RNDF32=%d,",(v>>9) & 1);
+        i += 9;
+    }
+    if (((f>>10) & 1) == 1) {
+        sprintf(str+i, "RNDF64=%d,",(v>>10) & 1);
+        i += 9;
+    }
+    str[i-1] = 0;
+}
+
 int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
 {
     fprintf_function fprintf_func = info->fprintf_func;
@@ -384,8 +433,8 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
         info->memory_error_func(status, addr, info);
         return -1;
     }
-    char str[40];
-    char str2[40];
+    char str[80];
+    char str2[80];
 
     unsigned long v;
     v = (unsigned long) buffer[2];
@@ -3465,12 +3514,18 @@ int print_insn_tms320c28x(bfd_vma addr, disassemble_info *info)
                 case 0b0110: //1110 0110 .... .... 
                 {
                     switch ((insn & 0x00c0) >> 6) {
-                        case 0b00:
+                        case 0b00://1110 0110 01FF FFFF FFFF FVVV VVVV VVVV SETFLG FLAG,VALUE
                         {
+                            length = 4;
+                            uint32_t f = (insn32 >> 11) & 0x7ff;
+                            uint32_t v = insn32 & 0x7ff;
+                            get_setflg_string(str, f, v);
+                            fprintf_func(stream, "0x%08x; SETFLG %s", insn32, str);
                             break;
                         }
-                        case 0b01://1110 0110 01.. ....
+                        case 0b01://1110 0110 01FF FFFF FFFF FVVV VVVV VVVV SAVE FLAG,VALUE
                         {
+                            length = 4;
                             break;
                         }
                         case 0b10://1110 0110 10.. ....
